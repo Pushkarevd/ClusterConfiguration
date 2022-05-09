@@ -1,9 +1,8 @@
 import time
 
 from client import Client, ClientException
-import threading
+from helper import parse_ip
 import logging
-import re
 from typing import Union
 
 LOGGER = logging.getLogger('manager')
@@ -22,35 +21,35 @@ class ProcessManager:
 
     def __init__(self):
         # Client - machine that was 'discovered'
-        self.clients = {}
+        self.clients_ips = []
+        self.clients = []
+
+    def __update_status_of_all_workers(self):
+        """
+        Updates all workers statuses
+        @return: None
+        """
+        for client in self.clients:
+            client.get_status()
 
     def get_workers_info(self) -> list[dict]:
         """
-        Get all information about workers
-        :return:
+        API for UI to get all information about machines
+        @return: list[dict] with all workers info
         """
+        self.__update_status_of_all_workers()
+
         response = [
             {
-                'name': client.name,
-                'os': client.os,
-                'cores': client.cores
-            } for client in self.clients
+                "name": worker.name,
+                "cores": worker.cores,
+                "os": worker.os,
+                "cpu_usage": worker.cpu_usage,
+                "ram_usage": worker.ram_usage
+            } for worker in self.clients
         ]
 
         return response
-
-    def get_workers_status(self) -> list[dict]:
-        """
-        Get CPU and RAM usage for all workers
-        :return: list[dict]
-        """
-        response = [
-            {
-                'cpu_usage': client.cpu_usage,
-                'ram_usage': client.ram_usage
-            } for client in self.clients
-        ]
-        LOGGER.warning(response)
 
     def add_new_client(self, client_data: str) -> bool:
         """
@@ -60,58 +59,34 @@ class ProcessManager:
         :return: bool, if new client was create - True, else False
         """
         # Parse ip and port from string
-        ip_pattern = '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-        port_pattern = '(?<=:)[0-9]{1,6}'
+        client = parse_ip(client_data)
+        if client is None:
+            LOGGER.warning(f"Can't parse ip address {client_data}")
+            return False
 
-        ip = re.findall(ip_pattern, client_data)
-        port = re.findall(port_pattern, client_data)
-
-        # Validate new client (ip, port)
-        if len(ip) != 1 or len(port) != 1:
-            LOGGER.warning(f"Can't parse {client_data}")
-        ip = ip[0]
-        port = int(port[0])
-        LOGGER.info(f'New client {ip}:{port}')
+        LOGGER.info(f'New client {client[0]}:{client[1]}')
 
         # Check if client already exists
-        if (ip, port) in self.clients.keys():
-            LOGGER.warning(f'Client {ip}:{port} already exists')
-            raise ProcessManagerException(f'Client {ip}:{port} already exists')
+        if client in self.clients_ips:
+            LOGGER.warning(f'Client {client[0]}:{client[1]} already exists')
+            raise ProcessManagerException(f'Client {client[0]}:{client[1]} already exists')
 
         # Init connection, add only after 'discover' operation
         try:
-            # Create process with Daemon=True, that mean if Parent process stops, child will be stopped too
-            thread = threading.Thread(
-                target=self.init_new_client,
-                args=((ip, port),),
-                daemon=True
-            )
-            thread.start()
-        except ProcessManagerException as err:
+            worker = Client(*client)
+            worker.discover_server()
+        except ClientException as err:
             LOGGER.warning(err)
             return False
 
+        self.clients_ips.append(client)
+        self.clients.append(worker)
         return True
-
-    def init_new_client(self, client: tuple) -> None:
-        """
-        Initialize connection between Manager and Client
-        :param client: tuple (ip, port)
-        """
-        client = Client(*client)
-        # Try create client and connect to it
-        try:
-            # If connection was established
-            self.clients[client] = client
-            client.connection_loop()
-        except ClientException:
-            self.clients.pop(client, None)
-            raise ProcessManagerException()
 
 
 if __name__ == "__main__":
     manager = ProcessManager()
     manager.add_new_client('127.0.0.1:2020')
     while True:
-        manager.get_workers_status()
+        print(manager.get_workers_status())
         time.sleep(5)

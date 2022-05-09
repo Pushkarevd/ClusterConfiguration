@@ -25,33 +25,36 @@ class Client(object):
     def __init__(self, server_ip, server_port):
         self.ip = server_ip
         self.port = server_port
+        self.socket = None
         self.os = None
         self.cores = None
         self.name = None
         self.cpu_usage = None
         self.ram_usage = None
 
-    def connection_loop(self):
-        LOGGER.info(f'Client started connection to {self.ip}:{self.port}')
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            try:
-                self.discover_server(sock)
-                while sock:
-                    sleep(10)
-                    self.get_status(sock)
-            except socket.error:
-                LOGGER.warning(f"Can't connect to {self.ip}:{self.port}")
-                raise ClientException(f"Can't connect to {self.ip}:{self.port}")
+        # Init connection
+        self.__init_connection()
 
-    def discover_server(self, sock: socket.socket) -> None:
+    def __init_connection(self) -> None:
+        """
+        Init connection with worker and saving socket to class attribute
+        @return: None
+        """
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.socket.connect((self.ip, self.port))
+        except socket.error:
+            LOGGER.warning(f"Can't connect to {self.ip}:{self.port}")
+
+    def discover_server(self) -> None:
         """
         Discover server worker
         Update worker OS and number of CPU cores
         :param sock:
         :return None:
         """
+        sock = self.socket
         LOGGER.info(f'Discover worker')
-        sock.connect((self.ip, self.port))
         sock.sendall(b'DISCOVER')
 
         try:
@@ -67,18 +70,17 @@ class Client(object):
             raise ClientException(f"Something went wrong")
         LOGGER.info("Worker successfully discovered")
 
-    def get_status(self, sock: socket.socket) -> None:
+    def get_status(self) -> None:
         """
         Get status of workers: Cpu usage and Ram usage
-        :param sock: socket.socket
         :return: dict
         """
         LOGGER.info(f'Getting status of {self.ip}:{self.port}')
         command = b'STATUS'
 
-        sock.sendall(command)
+        self.socket.sendall(command)
         try:
-            response = sock.recv(1024)
+            response = json.loads(self.socket.recv(1024).decode())
         except Exception:
             # TO DO
             # Change location of all Exception and change to Custome one
@@ -91,4 +93,8 @@ class Client(object):
 
 
 if __name__ == '__main__':
-    pass
+    client = Client('localhost', 2020)
+    client.discover_server()
+    client.get_status()
+    print(client.cores)
+    print(client.ram_usage)

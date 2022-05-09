@@ -90,8 +90,9 @@ class Server:
             'cpu_usage': psutil.cpu_percent(),
             'ram_usage': psutil.virtual_memory().percent
         }
+        status_encoded = json.dumps(status).encode()
 
-        return status
+        return status_encoded
 
 
 if __name__ == '__main__':
