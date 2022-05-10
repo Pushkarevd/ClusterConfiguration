@@ -10,25 +10,30 @@ from cluster_module.ventilator import Ventilator
 from worker_module.executor import Executor
 from worker_module.server_worker import ServerWorker
 from worker_module.status import Status
-from worker_module.worker import Worker
 
 
 LOGGER = logging.getLogger('init_pipeline')
 logging.basicConfig(level=logging.DEBUG)
 
 
-def worker_pipeline(ip, port):
+def worker_pipeline(ip='127.0.0.1', port=2020):
     # Init Status
     status_client = Status(ip, port)
+    LOGGER.info('Status Client started')
     while status_client.view_ports is None:
         pass
 
     ventilator_port, sink_port = status_client.view_ports
+    LOGGER.info(f'Ventilator port - {ventilator_port}\n'
+                f'Sink port - {sink_port}')
+
     ventilator_address = f"{ip}:{ventilator_port}"
     sink_address = f"{ip}:{sink_port}"
 
     server_worker = ServerWorker(ventilator_address, sink_address)
+    LOGGER.info('Server Worker started')
     executor = Executor(server_worker)
+    LOGGER.info('Executor started')
 
 
 def host_pipeline(port):
@@ -52,10 +57,9 @@ def host_pipeline(port):
 
     cluster_endpoint = ClusterEndpoint(endpoint_port, ventilator, sink)
     LOGGER.info('Endpoint started')
-
-    while not monitor.workers_info:
+    while not monitor.view_statuses:
         pass
-
+    LOGGER.info(monitor.view_statuses)
     ventilator.start_server()
     LOGGER.info('Ventilator ready for work')
 
@@ -97,5 +101,6 @@ if __name__ == "__main__":
     else:
         host_address = args.destination
         ip = host_address[:host_address.find(':')]
-        port = host_address[host_address.find(':') + 1:]
+        port = int(host_address[host_address.find(':') + 1:])
         # Do worker things
+        worker_pipeline(ip, port)

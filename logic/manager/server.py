@@ -96,8 +96,8 @@ class Server:
 
 
 if __name__ == '__main__':
-    argparse = ArgumentParser()
+    """ argparse = ArgumentParser()
     argparse.add_argument('--port', type=int)
-    args = argparse.parse_known_args()[0]
-    server = Server(args.port)
+    args = argparse.parse_known_args()[0]"""
+    server = Server(2020)
     server.start_server()

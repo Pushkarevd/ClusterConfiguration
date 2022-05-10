@@ -7,6 +7,7 @@ import json
 
 
 LOGGER = logging.getLogger('status_worker')
+logging.basicConfig(level=logging.INFO)
 
 
 class Status:
@@ -15,12 +16,14 @@ class Status:
         self._ip = ip
         self._port = port
 
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         self.__established_connection()
 
-    def __wait_connection(self, sock):
+    def __wait_connection(self):
         for tries in range(1, 11):
             try:
-                sock.connect((self._ip, self._port))
+                self._sock.connect((self._ip, self._port))
                 break
             except ConnectionError:
                 LOGGER.warning(f"Can't connect to {self._ip}:{self._port}\n"
@@ -30,29 +33,39 @@ class Status:
                                       f"Check address and try again")
             time.sleep(1)
 
-    def __get_init_msg(self, sock):
-        msg = sock.recv(1024)
-
-        sock.send(b'ACK')
+    def __get_init_msg(self):
+        msg = self._sock.recv(1024)
+        LOGGER.info(f'Init message received')
+        self._sock.send(b'ACK')
 
         decoded_msg = json.loads(msg.decode())
 
         self._ventilator_port = decoded_msg.get('ventilator')
         self._sink_port = decoded_msg.get('sink')
 
+        LOGGER.info(f'Ventilator port - {self._ventilator_port}\n'
+                    f'Sink port - {self._sink_port}')
+
     def __established_connection(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        self.__wait_connection()
+        self.__get_init_msg()
 
-            self.__wait_connection(sock)
-            self.__get_init_msg(sock)
+        self._status_thread = threading.Thread(
+            target=self.__status_loop,
+            daemon=True,
+            name='status_thread'
+        )
 
-            while True:
-                msg = sock.recv(1024)
-                if msg.decode() != 'STATUS':
-                    raise ConnectionError(f'Command from server is wrong,'
-                                          f' check address and try one more time')
-                status = self.__get_status()
-                sock.send(status)
+        self._status_thread.start()
+
+    def __status_loop(self):
+        while True:
+            msg = self._sock.recv(1024)
+            if msg.decode() != 'STATUS':
+                raise ConnectionError(f'Command from server is wrong,'
+                                      f' check address and try one more time')
+            status = self.__get_status()
+            self._sock.send(status)
 
     @staticmethod
     def __get_status():

@@ -32,8 +32,15 @@ class ClusterEndpoint:
         self._server.bind(f"tcp://*:{self._port}")
 
         self._send_thread = RepeatTimer(0.3, self.__sending_results)
+        self._receiving_thread = threading.Thread(
+            target=self.__receiving_task,
+            daemon=True,
+            name='receiving_thread'
+        )
+        self._receiving_thread.start()
         self._send_thread.start()
 
+    def __receiving_task(self):
         while True:
             msg = self._server.recv()
             LOGGER.debug(f'Message received')

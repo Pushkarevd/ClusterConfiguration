@@ -20,7 +20,7 @@ class Ventilator:
         self._sink.connect(f"tcp://localhost:{self._sink_port}")
 
         # Empty msg, signals start of batch
-        self._sink(b'')
+        self._sink.send(b'')
 
     def send_task(self, task: bytes):
         """
