@@ -7,7 +7,10 @@ class Ventilator:
         self._self_port = self_port
         self._sink_port = sink_port
 
-    def __init_server(self):
+        self._sink = None
+        self._sender = None
+
+    def start_server(self):
         context = zmq.Context()
         self._sender = context.socket(zmq.PUSH)
         self._sender.bind(f'tcp://*:{self._self_port}')
@@ -15,8 +18,6 @@ class Ventilator:
         # Adding connection to the sink for synchronize START of batch
         self._sink = context.socket(zmq.PUSH)
         self._sink.connect(f"tcp://localhost:{self._sink_port}")
-
-        # Add check that monitor if there active worker
 
         # Empty msg, signals start of batch
         self._sink(b'')

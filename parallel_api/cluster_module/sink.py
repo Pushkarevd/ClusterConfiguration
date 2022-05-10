@@ -14,7 +14,7 @@ class Sink:
         self._self_port = self_port
         self._results = []
 
-        self._lock = threading.Lock
+        self._lock = threading.Lock()
 
     def __init_server(self):
         context = zmq.Context()

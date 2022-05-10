@@ -1,8 +1,7 @@
 import json
 import logging
 
-from ClusterConfiguration.parallel_api.worker_module.server_worker import ServerWorker
-from ClusterConfiguration.parallel_api.worker_module.worker import Worker
+from .worker import Worker
 from os import cpu_count
 
 
@@ -105,9 +104,3 @@ class Executor:
         """
         finished_workers = [worker for worker in self._workers.values() if worker.status.value == 2]
         return finished_workers
-
-
-if __name__ == '__main__':
-    server = ServerWorker('127.0.0.1:2020', '127.0.0.1:2021')
-    LOGGER.debug('test')
-    Executor(server)

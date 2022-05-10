@@ -1,10 +1,20 @@
 import argparse
+import logging
+import multiprocessing as mp
 
-from ClusterConfiguration.parallel_api.worker_module.executor import Executor
-from worker_module.status import Status
+from cluster_module.cluster_endpoint import ClusterEndpoint
+from cluster_module.helpers import get_free_port
+from cluster_module.monitor import Monitor
+from cluster_module.sink import Sink
+from cluster_module.ventilator import Ventilator
+from worker_module.executor import Executor
 from worker_module.server_worker import ServerWorker
+from worker_module.status import Status
+from worker_module.worker import Worker
 
-from ClusterConfiguration.parallel_api.cluster_module.scheduler import Scheduler
+
+LOGGER = logging.getLogger('init_pipeline')
+logging.basicConfig(level=logging.DEBUG)
 
 
 def worker_pipeline(ip, port):
@@ -20,9 +30,34 @@ def worker_pipeline(ip, port):
     server_worker = ServerWorker(ventilator_address, sink_address)
     executor = Executor(server_worker)
 
-def host_pipeline():
-    scheduler = Scheduler()
 
+def host_pipeline(port):
+    monitor = Monitor(port)
+    LOGGER.info('Monitor started')
+
+    vent_port, sink_port = monitor.get_vent_and_sink_ports
+
+    LOGGER.info(f'Port for ventilator - {vent_port}\n'
+                f'Port for sink - {sink_port}')
+
+    sink = Sink(sink_port)
+    LOGGER.info(f'Sink started')
+
+    ventilator = Ventilator(self_port=vent_port, sink_port=sink_port)
+    LOGGER.info(f'Ventilator initialize')
+
+    endpoint_port = get_free_port()
+
+    print(f'Endpoint port - {endpoint_port}. For module execution, use this port.')
+
+    cluster_endpoint = ClusterEndpoint(endpoint_port, ventilator, sink)
+    LOGGER.info('Endpoint started')
+
+    while not monitor.workers_info:
+        pass
+
+    ventilator.start_server()
+    LOGGER.info('Ventilator ready for work')
 
 
 if __name__ == "__main__":
@@ -58,6 +93,7 @@ if __name__ == "__main__":
     if args.type == 'host':
         # Do host things
         host_port = args.port
+        host_pipeline(host_port)
     else:
         host_address = args.destination
         ip = host_address[:host_address.find(':')]

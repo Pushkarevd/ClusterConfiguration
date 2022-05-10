@@ -18,6 +18,8 @@ class Monitor:
     def __init__(self, port=2020):
         self._port = port
 
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         self._lock = threading.Lock()
         self._worker = []
         self._workers_info = {}
@@ -42,24 +44,31 @@ class Monitor:
         sock_2.close()
 
     def __init_server(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            LOGGER.info('Monitor server started')
-            sock.bind(('localhost', self._port))
-            sock.listen(20)
+        LOGGER.info('Monitor server started')
+        self._sock.bind(('localhost', self._port))
+        self._sock.listen(20)
 
-            while True:
-                conn, addr = sock.accept()
+        accepted_thread = threading.Thread(
+            target=self.__accept_new_connection,
+            daemon=True,
+            name='monitor_accepted_thread'
+        )
+        accepted_thread.start()
 
-                LOGGER.info(f'New worker {addr} connected')
-                # ID of connection is position of connection in worker list
-                self._worker.append(conn)
-                thread = threading.Thread(
-                    target=self.__handle_worker,
-                    args=(conn, addr,),
-                    daemon=True,
-                    name=f'worker {len(self._worker)}'
-                )
-                thread.start()
+    def __accept_new_connection(self):
+        while True:
+            conn, addr = self._sock.accept()
+
+            LOGGER.info(f'New worker {addr} connected')
+            # ID of connection is position of connection in worker list
+            self._worker.append(conn)
+            thread = threading.Thread(
+                target=self.__handle_worker,
+                args=(conn, addr,),
+                daemon=True,
+                name=f'worker {len(self._worker)}'
+            )
+            thread.start()
 
     def __init_msg(self, conn):
         # First message - Ventilator and Sink ports
@@ -99,7 +108,11 @@ class Monitor:
 
     @property
     def view_statuses(self):
-        print(self._workers_info)
+        return self._workers_info
+
+    @property
+    def get_vent_and_sink_ports(self):
+        return self._ventilator_port, self._sink_port
 
 
 if __name__ == '__main__':
