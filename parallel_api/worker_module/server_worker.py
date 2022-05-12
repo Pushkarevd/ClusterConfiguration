@@ -70,7 +70,7 @@ class ServerWorker:
         if self._result_queue:
             while self._result_queue:
                 result = pickle.dumps(self._result_queue.pop(0))
-                LOGGER.info('Result sent')
+                LOGGER.info(f'Result sent to {self._sending_addr}')
                 self._sender.send(result)
 
 

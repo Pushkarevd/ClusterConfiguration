@@ -50,6 +50,7 @@ class ClusterEndpoint:
 
     def __sending_results(self):
         results = self._sink.get_results()
+        LOGGER.info(f'Get result from sink')
         if results:
             for result in results:
                 LOGGER.debug(f'Result sent')

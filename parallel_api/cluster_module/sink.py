@@ -15,6 +15,7 @@ class Sink:
         self._results = []
 
         self._lock = threading.Lock()
+        self.__init_server()
 
     def __init_server(self):
         context = zmq.Context()
@@ -22,13 +23,16 @@ class Sink:
         self._receiver.bind(f"tcp://*:{self._self_port}")
 
         # Waiting for start of the batch
-        self._receiver.recv()
+
         reading_thread = threading.Thread(target=self.__result_waiting, daemon=True, name='sink_reader')
         reading_thread.start()
 
     def __result_waiting(self):
+        self._receiver.recv()
+        LOGGER.info('Received first byte')
         while True:
             result = self._receiver.recv()
+            LOGGER.info(f'Received result')
             self._results.append(result)
 
     def get_results(self) -> list:
