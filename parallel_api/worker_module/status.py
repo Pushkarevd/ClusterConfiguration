@@ -7,7 +7,7 @@ import time
 
 
 LOGGER = logging.getLogger('status_worker')
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 
 class Status:

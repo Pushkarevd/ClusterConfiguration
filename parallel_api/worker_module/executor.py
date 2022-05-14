@@ -6,7 +6,7 @@ from os import cpu_count
 
 
 LOGGER = logging.getLogger('executor')
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 class Executor:
@@ -21,7 +21,7 @@ class Executor:
         # Create workers and set status to IDLE
         self._workers = {
             idx: Worker()
-            for idx in range(cpu_count())
+            for idx in range(cpu_count() // 2)
         }
 
         self._task_queue = []

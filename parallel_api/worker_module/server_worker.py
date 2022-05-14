@@ -9,7 +9,7 @@ from threading import Lock
 
 
 LOGGER = logging.getLogger(f'worker {environ["COMPUTERNAME"]}')
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 class RepeatTimer(threading.Timer):

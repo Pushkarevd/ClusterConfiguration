@@ -48,11 +48,21 @@ class Worker:
         idx, func, args, kwargs = self.__deserialize_task(task)
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(func, *args, **kwargs)
+        try:
+            result = future.result()
+        except NameError as err:
+            err_string = str(err)
+            module = err_string[err_string.find("'") + 1: err_string.rfind("'")]
+            tmp = __import__(module)
+            globals()[module] = tmp
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(func, *args, **kwargs)
+            result = future.result()
 
         self._status = TaskStatus.FINISHED
         self._result = {
             'idx': idx,
-            'result': future.result()
+            'result': result
         }
 
     @staticmethod

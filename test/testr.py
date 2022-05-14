@@ -1,10 +1,19 @@
 from datetime import datetime
+import cv2
 
-def foo(x, y):
-    return x ** 2 + y ** 2
+
+def test(img):
+    orb = cv2.AKAZE_create()
+    kp = orb.detect(img, None)
+    kp, des = orb.compute(img, kp)
+    return des
 
 now = datetime.now()
-lazy_tasks = [foo(x, x ** .5) for x in range(10000)]
+
+img = cv2.imread('./img.jpg')
+
+imgs_lazy = [test(img) for _ in range(500)]
 
 after = datetime.now()
+
 print(after - now)

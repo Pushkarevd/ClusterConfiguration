@@ -2,7 +2,7 @@ from parallel_api.api.client_endpoint import ClientEndpoint
 from parallel_api.api.wrapper import cluster_function
 from datetime import datetime
 import cv2
-endpoint = ClientEndpoint(63345)
+endpoint = ClientEndpoint(49479)
 
 
 @cluster_function(endpoint=endpoint)
@@ -16,7 +16,7 @@ now = datetime.now()
 
 img = cv2.imread('./img.jpg')
 
-imgs_lazy = [test(img) for _ in range(100)]
+imgs_lazy = [test(img) for _ in range(500)]
 
 imgs = [x.result for x in imgs_lazy]
 

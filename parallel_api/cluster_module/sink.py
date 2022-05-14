@@ -5,7 +5,7 @@ import logging
 
 
 LOGGER = logging.getLogger('sink')
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 class Sink:
