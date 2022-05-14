@@ -1,9 +1,9 @@
+import pickle
 import threading
 import socket
 import psutil
 import logging
 import time
-import json
 
 
 LOGGER = logging.getLogger('status_worker')
@@ -38,7 +38,7 @@ class Status:
         LOGGER.info(f'Init message received')
         self._sock.send(b'ACK')
 
-        decoded_msg = json.loads(msg.decode())
+        decoded_msg = pickle.loads(msg.decode())
 
         self._ventilator_port = decoded_msg.get('ventilator')
         self._sink_port = decoded_msg.get('sink')
@@ -69,7 +69,7 @@ class Status:
 
     @staticmethod
     def __get_status():
-        return json.dumps({
+        return pickle.dumps({
             'cpu': psutil.cpu_percent(),
             'ram': psutil.virtual_memory().percent,
             'name': socket.gethostname(),

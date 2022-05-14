@@ -1,3 +1,4 @@
+import pickle
 import threading
 import logging
 import socket
@@ -72,12 +73,12 @@ class Monitor:
 
     def __init_msg(self, conn):
         # First message - Ventilator and Sink ports
-        msg = json.dumps(
+        msg = pickle.dumps(
             {
                 'ventilator': self._ventilator_port,
                 'sink': self._sink_port
             }
-        ).encode()
+        )
 
         try:
             conn.send(msg)
@@ -98,7 +99,7 @@ class Monitor:
                 conn.send(b'STATUS')
 
                 status = conn.recv(1024)
-                parsed_status = json.loads(status.decode())
+                parsed_status = pickle.loads(status)
                 with self._lock:
                     self._workers_info[addr] = parsed_status
                 time.sleep(3)
