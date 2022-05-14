@@ -1,104 +1,47 @@
-from threading import Thread
-from typing import Callable
 from random import getrandbits
-from functools import cache
-from os import getpid
-import socket
-import json
 import pickle
-
-
-class FunctionWrapper(Thread):
-    def __init__(self, function: Callable, scheduler: Scheduler, *args, **kwargs):
-        Thread.__init__(self)
-        # TO DO
-        # Create Client for sending task to cluster
-        # And Server for receiving results
-        self._scheduler = scheduler
-        self._func = function
-        self._args = args
-        self._kwargs = kwargs
-
-    @property
-    def __serialize_task(self) -> str:
-        """
-        Function that serialized task for sending through socket connection
-        @return: str, json
-        """
-        pickled_function = pickle.dumps(self._func, 0).decode()
-
-        # ID of task will contain info about machine where this task is executed
-        # Will contain id of module where this task is needed
-        # And id of TASK itself (12 bit)
-        task = {
-            'idx': self.__generate_id(),
-            'function': pickled_function,
-            'args': self._args,
-            'kwargs': self._kwargs
-        }
-
-        serialized_task = json.dumps(task)
-
-        return serialized_task
-
-    def __generate_id(self):
-        machine_id = self.get_my_ip()
-        module_id = str(getpid())
-        task_id = getrandbits(12)
-
-        return machine_id, module_id, task_id
-
-    @staticmethod
-    @cache
-    def get_my_ip() -> bytes:
-        """
-        Get ip of current machine in local network
-        @return: ip as string
-        """
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as st:
-            try:
-                st.connect(('10.255.255.255', 1))
-                ip = st.getsockname()[0]
-            except socket.error as exc:
-                return f'Error, cant connect {exc}'
-        return ip
-
-    def run(self) -> None:
-        """
-        When thread is started, serialize task and send it to Scheduler
-        @return: None
-        """
-        serialized_task = self.__serialize_task
-        self._scheduler.add_task_to_queue(serialized_task)
+import marshal
 
 
 class DistributedTask:
+    """
+    Wrapper for distributed function
+    """
+    def __init__(self, endpoint, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self._endpoint = endpoint
+        self._task_id = getrandbits(16)
 
-    def __init__(self, function: Callable, *args, **kwargs):
-        self._wrapped_function = FunctionWrapper(function, args, kwargs)
-        self._result = self._wrapped_function.start()
+        self._result = None
 
-    def __call__(self):
+        self.__send_task()
+
+    def __serialize_task(self):
+        serialized_function = marshal.dumps(self.func.__code__)
+        task = pickle.dumps(
+            {
+                'idx': self._task_id,
+                'function': serialized_function,
+                'args': self.args,
+                'kwargs': self.kwargs if self.kwargs else {}
+            }
+        )
+        return task
+
+    def __send_task(self):
+        serialized_task = self.__serialize_task()
+        self._endpoint.send_task(serialized_task)
+
+    @property
+    def result(self):
         """
-        If instance of this task was called, then if task already computed then return result
-        Else stop main thread
-        @return: *
+        Take CPU resource till result
+        Came from cluster
         """
-        self._wrapped_function.join()
+        while self._result is None:
+            # While result is none -> try to get result from endpoint
+            self._result = self._endpoint.get_result(self._task_id)
+        print(1)
         return self._result
-
-
-def foo(x):
-    return x ** 2
-
-
-if __name__ == "__main__":
-    wrapped_func = DistributedTask(foo, 10)
-
-    print('before')
-
-    wrapped_func()
-
-    print('between')
-
-    print('after')

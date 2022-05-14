@@ -21,7 +21,7 @@ class RepeatTimer(threading.Timer):
 class ServerWorker:
 
     def __init__(self, receiving_addr, sending_addr):
-        self._receviving_addr = receiving_addr
+        self._receiving_addr = receiving_addr
         self._sending_addr = sending_addr
 
         self._task_queue = []
@@ -35,7 +35,7 @@ class ServerWorker:
         context = zmq.Context()
 
         self._receiver = context.socket(zmq.PULL)
-        self._receiver.connect(f"tcp://{self._receviving_addr}")
+        self._receiver.connect(f"tcp://{self._receiving_addr}")
 
         self._sender = context.socket(zmq.PUSH)
         self._sender.connect(f"tcp://{self._sending_addr}")
