@@ -38,7 +38,7 @@ class Status:
         LOGGER.info(f'Init message received')
         self._sock.send(b'ACK')
 
-        decoded_msg = pickle.loads(msg.decode())
+        decoded_msg = pickle.loads(msg)
 
         self._ventilator_port = decoded_msg.get('ventilator')
         self._sink_port = decoded_msg.get('sink')
@@ -74,7 +74,7 @@ class Status:
             'ram': psutil.virtual_memory().percent,
             'name': socket.gethostname(),
             'cores': psutil.cpu_count()
-        }).encode()
+        })
 
     @property
     def view_ports(self):
