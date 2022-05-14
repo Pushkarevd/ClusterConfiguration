@@ -1,18 +1,25 @@
 from parallel_api.api.client_endpoint import ClientEndpoint
 from parallel_api.api.wrapper import cluster_function
-
-
-endpoint = ClientEndpoint(51365)
+from datetime import datetime
+import cv2
+endpoint = ClientEndpoint(63345)
 
 
 @cluster_function(endpoint=endpoint)
-def foo(x, y):
-    return x ** 2 + y ** 2
+def test(img):
+    orb = cv2.AKAZE_create()
+    kp = orb.detect(img, None)
+    kp, des = orb.compute(img, kp)
+    return des
 
+now = datetime.now()
 
-lazy_tasks = [foo(x, x ** .5) for x in range(100)]
+img = cv2.imread('./img.jpg')
 
-results = [x.result for x in lazy_tasks]
+imgs_lazy = [test(img) for _ in range(100)]
 
-print(results)
-print(len(results))
+imgs = [x.result for x in imgs_lazy]
+
+after = datetime.now()
+
+print(after - now)

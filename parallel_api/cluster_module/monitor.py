@@ -3,7 +3,7 @@ import threading
 import logging
 import socket
 import time
-import json
+
 
 LOGGER = logging.getLogger('monitor')
 

@@ -10,6 +10,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 class ClientEndpoint:
 
+    RECEIVED_COUNTER = 0
+    SENT_COUNTER = 0
+
     def __init__(self, cluster_port: int):
         self.cluster_port = cluster_port
 
@@ -43,6 +46,7 @@ class ClientEndpoint:
     def __received_result(self):
         while True:
             result = self._client.recv()
+            self.RECEIVED_COUNTER += 1
             decoded_result = self.__decode_result(result)
             self._received_results[decoded_result[0]] = decoded_result[1]
 

@@ -1,6 +1,6 @@
-from random import getrandbits
 import pickle
 import marshal
+import uuid
 
 
 class DistributedTask:
@@ -12,8 +12,7 @@ class DistributedTask:
         self.args = args
         self.kwargs = kwargs
         self._endpoint = endpoint
-        self._task_id = getrandbits(16)
-
+        self._task_id = uuid.uuid4()
         self._result = None
 
         self.__send_task()
@@ -43,5 +42,4 @@ class DistributedTask:
         while self._result is None:
             # While result is none -> try to get result from endpoint
             self._result = self._endpoint.get_result(self._task_id)
-        print(1)
         return self._result
