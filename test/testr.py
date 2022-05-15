@@ -2,18 +2,16 @@ from datetime import datetime
 import cv2
 
 
-def test(img):
-    orb = cv2.AKAZE_create()
-    kp = orb.detect(img, None)
-    kp, des = orb.compute(img, kp)
-    return des
+def batch_factorial(batch):
+    result = 1
+    for i in batch:
+        result *= i
+    return result
 
 now = datetime.now()
 
-img = cv2.imread('./img.jpg')
-
-imgs_lazy = [test(img) for _ in range(500)]
+print(batch_factorial(range(1, 100_000)))
 
 after = datetime.now()
 
-print(after - now)
+print(f'Basic factorial - {after - now}')

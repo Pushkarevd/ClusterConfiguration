@@ -2,24 +2,24 @@ from parallel_api.api.client_endpoint import ClientEndpoint
 from parallel_api.api.wrapper import cluster_function
 from datetime import datetime
 import cv2
-endpoint = ClientEndpoint(49479)
+endpoint = ClientEndpoint(51362)
 
 
 @cluster_function(endpoint=endpoint)
-def test(img):
-    orb = cv2.AKAZE_create()
-    kp = orb.detect(img, None)
-    kp, des = orb.compute(img, kp)
-    return des
+def batch_factorial(batch):
+    result = 1
+    for i in batch:
+        result *= i
+    return result
+
+
+batches = [range(i, i + 10000) for i in range(1, 100_000, 10000)]
 
 now = datetime.now()
 
-img = cv2.imread('./img.jpg')
-
-imgs_lazy = [test(img) for _ in range(500)]
-
-imgs = [x.result for x in imgs_lazy]
-
+lazy_result = [batch_factorial(batch) for batch in batches]
+result = [batch.result for batch in lazy_result]
+print(batch_factorial(result).result)
 after = datetime.now()
 
-print(after - now)
+print(f'Local Cluster Result - {after - now}')

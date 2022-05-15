@@ -21,7 +21,7 @@ class Executor:
         # Create workers and set status to IDLE
         self._workers = {
             idx: Worker()
-            for idx in range(cpu_count() // 2)
+            for idx in range(cpu_count())
         }
 
         self._task_queue = []
