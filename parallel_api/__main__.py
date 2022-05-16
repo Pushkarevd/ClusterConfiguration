@@ -15,7 +15,7 @@ LOGGER = logging.getLogger('init_pipeline')
 logging.basicConfig(level=logging.DEBUG)
 
 
-def worker_pipeline(ip='127.0.0.1', port=2020):
+def worker_pipeline(ip: str, port: int):
     # Init Status
     status_client = Status(ip, port)
     LOGGER.info('Status Client started')

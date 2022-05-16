@@ -47,7 +47,7 @@ class Monitor:
 
     def __init_server(self):
         LOGGER.info('Monitor server started')
-        self._sock.bind(('localhost', self._port))
+        self._sock.bind(('', self._port))
         self._sock.listen(20)
 
         accepted_thread = threading.Thread(

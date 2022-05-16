@@ -1,8 +1,8 @@
 from parallel_api.api.client_endpoint import ClientEndpoint
 from parallel_api.api.wrapper import cluster_function
 from datetime import datetime
-import cv2
-endpoint = ClientEndpoint(52457)
+
+endpoint = ClientEndpoint(51353)
 
 
 @cluster_function(endpoint=endpoint)
