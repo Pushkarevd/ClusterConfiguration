@@ -10,7 +10,7 @@ def batch_factorial(batch):
 
 now = datetime.now()
 
-print(batch_factorial(range(1, 100_000)))
+batch_factorial(range(1, 1_000_000))
 
 after = datetime.now()
 

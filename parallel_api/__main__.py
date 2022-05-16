@@ -1,9 +1,8 @@
 import argparse
 import logging
-import multiprocessing as mp
 
 from cluster_module.cluster_endpoint import ClusterEndpoint
-from cluster_module.helpers import get_free_port
+from cluster_module.helpers import get_free_port, get_my_ip
 from cluster_module.monitor import Monitor
 from cluster_module.sink import Sink
 from cluster_module.ventilator import Ventilator
@@ -37,6 +36,7 @@ def worker_pipeline(ip='127.0.0.1', port=2020):
 
 
 def host_pipeline(port):
+    self_ip = get_my_ip()
     monitor = Monitor(port)
     LOGGER.info('Monitor started')
 
@@ -53,7 +53,7 @@ def host_pipeline(port):
 
     endpoint_port = get_free_port()
 
-    print(f'Endpoint port - {endpoint_port}. For module execution, use this port.')
+    print(f'Endpoint port - {self_ip}:{endpoint_port}. For module execution, use this port.')
 
     cluster_endpoint = ClusterEndpoint(endpoint_port, ventilator, sink)
     LOGGER.info('Endpoint started')

@@ -6,6 +6,7 @@ import time
 
 
 LOGGER = logging.getLogger('monitor')
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Monitor:

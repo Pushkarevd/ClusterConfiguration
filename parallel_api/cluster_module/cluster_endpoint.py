@@ -3,7 +3,7 @@ import logging
 import threading
 
 LOGGER = logging.getLogger('cluster-endpoint')
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class RepeatTimer(threading.Timer):
