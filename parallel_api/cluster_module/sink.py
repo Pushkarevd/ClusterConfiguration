@@ -22,8 +22,6 @@ class Sink:
         self._receiver = context.socket(zmq.PULL)
         self._receiver.bind(f"tcp://*:{self._self_port}")
 
-        # Waiting for start of the batch
-
         reading_thread = threading.Thread(target=self.__result_waiting, daemon=True, name='sink_reader')
         reading_thread.start()
 
@@ -40,3 +38,4 @@ class Sink:
             result_copy = copy.deepcopy(self._results)
             self._results = []
         return result_copy
+

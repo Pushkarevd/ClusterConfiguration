@@ -17,14 +17,14 @@ class Monitor:
     about new worker
     """
 
-    def __init__(self, port=2020):
+    def __init__(self, port, manager_dict):
         self._port = port
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self._lock = threading.Lock()
         self._worker = []
-        self._workers_info = {}
+        self._workers_info = manager_dict
 
         self.__get_random_free_port()
         self.__init_server()
@@ -106,6 +106,8 @@ class Monitor:
                 time.sleep(3)
             except ConnectionResetError:
                 conn.close()
+                with self._lock:
+                    self._workers_info.pop(addr)
                 return False
 
     @property

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Diplom.iml" filepath="$PROJECT_DIR$/.idea/Diplom.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/ClusterConfiguration.iml" filepath="$PROJECT_DIR$/.idea/ClusterConfiguration.iml" />
     </modules>
   </component>
 </project>

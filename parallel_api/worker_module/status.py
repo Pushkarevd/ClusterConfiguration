@@ -10,11 +10,27 @@ LOGGER = logging.getLogger('status_worker')
 logging.basicConfig(level=logging.WARNING)
 
 
+def get_my_ip() -> str:
+    """
+    Get ip of current machine in local network
+    :return: ip as string
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as st:
+        try:
+            st.connect(('10.255.255.255', 1))
+            ip = st.getsockname()[0]
+        except socket.error as exc:
+            return f'Error, cant connect {exc}'
+    return ip
+
+
 class Status:
 
     def __init__(self, ip, port):
         self._ip = ip
         self._port = port
+
+        self._self_ip = get_my_ip()
 
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -64,16 +80,17 @@ class Status:
             if msg.decode() != 'STATUS':
                 raise ConnectionError(f'Command from server is wrong,'
                                       f' check address and try one more time')
-            status = self.__get_status()
+            status = self.__get_status(self._self_ip)
             self._sock.send(status)
 
     @staticmethod
-    def __get_status():
+    def __get_status(ip):
         return pickle.dumps({
             'cpu': psutil.cpu_percent(),
             'ram': psutil.virtual_memory().percent,
             'name': socket.gethostname(),
-            'cores': psutil.cpu_count()
+            'cores': psutil.cpu_count(),
+            'ip': ip
         })
 
     @property
