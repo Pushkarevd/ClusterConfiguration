@@ -7,8 +7,6 @@ import imgui
 from imgui.integrations.glfw import GlfwRenderer
 
 path_to_font = r"C:\Users\Пушкарев Даниил\PycharmProjects\ClusterConfiguration\parallel_api\cluster_module\constan.ttf"
-values_done = 200
-values_all = 400
 
 
 def render_frame(impl, window, font, machines):
@@ -75,9 +73,6 @@ def new_frame(machines):
 
     imgui.columns(1)
 
-    imgui.begin_child('progress')
-    imgui.text(f'Tasks completed - {values_done} out of {values_all}')
-    imgui.end_child()
     imgui.end()
 
 
@@ -113,7 +108,6 @@ def start_gui(machines):
 
     io = imgui.get_io()
     jb = io.fonts.add_font_from_file_ttf(path_to_font, 30) if path_to_font is not None else None
-    print(jb)
     impl.refresh_font_texture()
 
     while not glfw.window_should_close(window):
