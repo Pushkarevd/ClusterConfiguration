@@ -16,17 +16,16 @@ class Executor:
     After executor send response with id of task and result
     """
 
-    def __init__(self, server):
-        self._server = server
+    def __init__(self, task_list, result_list, lock):
         # Create workers and set status to IDLE
         self._workers = {
             idx: Worker()
             for idx in range(cpu_count())
         }
 
-        self._task_queue = []
-        # All results that will be send to Scheduler back
-        self._result_queue = []
+        self._task_queue = task_list
+        self._result_queue = result_list
+        self._lock = lock
 
         self.__main_loop()
 
@@ -53,7 +52,8 @@ class Executor:
             # take task from queue and send it to worker
             while self.__get_idle_worker() is not None and self._task_queue:
                 idle_worker: Worker = self._workers[self.__get_idle_worker()]
-                task = self._task_queue.pop()
+                with self._lock:
+                    task = self._task_queue.pop()
                 LOGGER.debug('Task delegated')
                 idle_worker.execute_task(task)
                 continue
@@ -65,11 +65,6 @@ class Executor:
                 LOGGER.debug('There some finished workers')
                 results = self.__get_results(finished_workers)
                 self.__send_result(results)
-            # Get new tasks from ServerWorker
-
-            new_tasks = self._server.get_task()
-            if new_tasks:
-                self._task_queue.extend(new_tasks)
 
     @staticmethod
     def __get_results(finished_workers: list):
@@ -83,7 +78,9 @@ class Executor:
         return results
 
     def __send_result(self, results):
-        self._server.add_result(results)
+        for result in results:
+            with self._lock:
+                self._result_queue.append(result)
 
     def __get_idle_worker(self) -> int:
         """

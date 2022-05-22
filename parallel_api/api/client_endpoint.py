@@ -46,7 +46,6 @@ class ClientEndpoint:
     def __received_result(self):
         while True:
             result = self._client.recv()
-            self.RECEIVED_COUNTER += 1
             decoded_result = self.__decode_result(result)
             self._received_results[decoded_result[0]] = decoded_result[1]
 

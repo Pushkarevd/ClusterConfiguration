@@ -1,14 +1,20 @@
 import argparse
 import logging
+import os, sys
+import multiprocessing
 
-from cluster_module.cluster_endpoint import ClusterEndpoint
-from cluster_module.helpers import get_free_port, get_my_ip
-from cluster_module.monitor import Monitor
-from cluster_module.sink import Sink
-from cluster_module.ventilator import Ventilator
-from worker_module.executor import Executor
-from worker_module.server_worker import ServerWorker
-from worker_module.status import Status
+from parallel_api.cluster_module.cluster_endpoint import ClusterEndpoint
+from parallel_api.cluster_module.helpers import get_my_ip, get_free_port
+from parallel_api.cluster_module.monitor import Monitor
+from parallel_api.cluster_module.sink import Sink
+from parallel_api.cluster_module.ventilator import Ventilator
+from parallel_api.worker_module.executor import Executor
+from parallel_api.worker_module.server_worker import ServerWorker
+from parallel_api.worker_module.status import Status
+
+if not __package__:
+    path = os.path.join(os.path.dirname(__file__), os.pardir)
+    sys.path.insert(0, path)
 
 
 LOGGER = logging.getLogger('init_pipeline')
@@ -17,6 +23,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 def worker_pipeline(ip: str, port: int):
     # Init Status
+    manager = multiprocessing.Manager()
+    task_list = manager.list()
+    result_list = manager.list()
+    lock = manager.Lock()
+
     status_client = Status(ip, port)
     LOGGER.info('Status Client started')
     while status_client.view_ports is None:
@@ -28,14 +39,16 @@ def worker_pipeline(ip: str, port: int):
 
     ventilator_address = f"{ip}:{ventilator_port}"
     sink_address = f"{ip}:{sink_port}"
+    server_worker = ServerWorker(ventilator_address, sink_address, task_list, result_list, lock)
+    server_process = multiprocessing.Process(target=server_worker.main_loop, daemon=True)
+    server_process.start()
 
-    server_worker = ServerWorker(ventilator_address, sink_address)
     LOGGER.info('Server Worker started')
-    executor = Executor(server_worker)
+    executor = Executor(task_list, result_list, lock)
     LOGGER.info('Executor started')
 
 
-def host_pipeline(port):
+def host_pipeline(port, endpoint=None):
     self_ip = get_my_ip()
     monitor = Monitor(port)
     LOGGER.info('Monitor started')
@@ -51,7 +64,7 @@ def host_pipeline(port):
     ventilator = Ventilator(self_port=vent_port, sink_port=sink_port)
     LOGGER.info(f'Ventilator initialize')
 
-    endpoint_port = get_free_port()
+    endpoint_port = get_free_port() if endpoint is None else endpoint
 
     print(f'Endpoint port - {self_ip}:{endpoint_port}. For module execution, use this port.')
 
@@ -85,6 +98,11 @@ if __name__ == "__main__":
         '--port',
         type=int
     )
+    argparser.add_argument(
+        '-e',
+        '--endpoint',
+        type=int
+    )
 
     argparser.add_argument(
         '--ui',
@@ -97,7 +115,7 @@ if __name__ == "__main__":
     if args.type == 'host':
         # Do host things
         host_port = args.port
-        host_pipeline(host_port)
+        host_pipeline(host_port, args.endpoint)
     else:
         host_address = args.destination
         ip = host_address[:host_address.find(':')]

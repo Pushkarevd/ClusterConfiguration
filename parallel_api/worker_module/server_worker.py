@@ -5,7 +5,6 @@ import zmq
 import copy
 
 from os import environ
-from threading import Lock
 
 
 LOGGER = logging.getLogger(f'worker {environ["COMPUTERNAME"]}')
@@ -20,18 +19,16 @@ class RepeatTimer(threading.Timer):
 
 class ServerWorker:
 
-    def __init__(self, receiving_addr, sending_addr):
+    def __init__(self, receiving_addr, sending_addr, task_queue, result_queue, lock):
         self._receiving_addr = receiving_addr
         self._sending_addr = sending_addr
 
-        self._task_queue = []
-        self._result_queue = []
+        self._task_queue = task_queue
+        self._result_queue = result_queue
 
-        self._lock = Lock()
+        self._lock = lock
 
-        self.__main_loop()
-
-    def __main_loop(self):
+    def main_loop(self):
         context = zmq.Context()
 
         self._receiver = context.socket(zmq.PULL)
@@ -53,12 +50,6 @@ class ServerWorker:
             task = self._receiver.recv()
             LOGGER.info('Task received')
             self._task_queue.append(task)
-
-    def get_task(self):
-        with self._lock:
-            tasks = copy.deepcopy(self._task_queue)
-            self._task_queue = []
-        return tasks
 
     def add_result(self, results):
         with self._lock:
