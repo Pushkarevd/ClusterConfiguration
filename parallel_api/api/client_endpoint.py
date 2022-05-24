@@ -4,7 +4,7 @@ import pickle
 import logging
 
 
-LOGGER = logging.getLogger('client-endpoint')
+LOGGER = logging.getLogger("client-endpoint")
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -26,12 +26,10 @@ class ClientEndpoint:
         context = zmq.Context()
         self._client = context.socket(zmq.PAIR)
         self._client.connect(f"tcp://127.0.0.1:{self.cluster_port}")
-        LOGGER.info(f'Connected to {self.cluster_port}')
+        LOGGER.info(f"Connected to {self.cluster_port}")
 
         self._read_thread = threading.Thread(
-            target=self.__received_result,
-            daemon=True,
-            name='read_thread'
+            target=self.__received_result, daemon=True, name="read_thread"
         )
 
         self._read_thread.start()

@@ -52,7 +52,7 @@ class Worker:
             result = future.result()
         except NameError as err:
             err_string = str(err)
-            module = err_string[err_string.find("'") + 1: err_string.rfind("'")]
+            module = err_string[err_string.find("'") + 1 : err_string.rfind("'")]
             tmp = __import__(module)
             globals()[module] = tmp
             with ThreadPoolExecutor(max_workers=1) as executor:
@@ -60,10 +60,7 @@ class Worker:
             result = future.result()
 
         self._status = TaskStatus.FINISHED
-        self._result = {
-            'idx': idx,
-            'result': result
-        }
+        self._result = {"idx": idx, "result": result}
 
     @staticmethod
     def __deserialize_task(task) -> tuple[int, Callable, list, dict]:
@@ -75,12 +72,14 @@ class Worker:
         """
         deserialized_task = pickle.loads(task)
 
-        function_code = marshal.loads(deserialized_task.get('function'))
-        function = FunctionType(function_code, globals(), f'{hash(getrandbits(20))}')
-        return (deserialized_task.get('idx'),
-                function,
-                deserialized_task.get('args'),
-                deserialized_task.get('kwargs'))
+        function_code = marshal.loads(deserialized_task.get("function"))
+        function = FunctionType(function_code, globals(), f"{hash(getrandbits(20))}")
+        return (
+            deserialized_task.get("idx"),
+            function,
+            deserialized_task.get("args"),
+            deserialized_task.get("kwargs"),
+        )
 
 
 if __name__ == "__main__":

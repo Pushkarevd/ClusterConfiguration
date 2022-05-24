@@ -2,7 +2,7 @@ import zmq
 import logging
 import threading
 
-LOGGER = logging.getLogger('cluster-endpoint')
+LOGGER = logging.getLogger("cluster-endpoint")
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -33,9 +33,7 @@ class ClusterEndpoint:
 
         self._send_thread = RepeatTimer(0.3, self.__sending_results)
         self._receiving_thread = threading.Thread(
-            target=self.__receiving_task,
-            daemon=True,
-            name='receiving_thread'
+            target=self.__receiving_task, daemon=True, name="receiving_thread"
         )
         self._receiving_thread.start()
         self._send_thread.start()
@@ -43,7 +41,7 @@ class ClusterEndpoint:
     def __receiving_task(self):
         while True:
             msg = self._server.recv()
-            LOGGER.debug(f'Message received')
+            LOGGER.debug(f"Message received")
 
             # Send new task to main Ventilator
             self._ventilator.send_task(msg)
@@ -52,5 +50,5 @@ class ClusterEndpoint:
         results = self._sink.get_results()
         if results:
             for result in results:
-                LOGGER.debug(f'Result sent')
+                LOGGER.debug(f"Result sent")
                 self._server.send(result)

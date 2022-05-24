@@ -4,12 +4,11 @@ import copy
 import logging
 
 
-LOGGER = logging.getLogger('sink')
+LOGGER = logging.getLogger("sink")
 logging.basicConfig(level=logging.WARNING)
 
 
 class Sink:
-
     def __init__(self, self_port):
         self._self_port = self_port
         self._results = []
@@ -24,15 +23,17 @@ class Sink:
 
         # Waiting for start of the batch
 
-        reading_thread = threading.Thread(target=self.__result_waiting, daemon=True, name='sink_reader')
+        reading_thread = threading.Thread(
+            target=self.__result_waiting, daemon=True, name="sink_reader"
+        )
         reading_thread.start()
 
     def __result_waiting(self):
         self._receiver.recv()
-        LOGGER.info('Received first byte')
+        LOGGER.info("Received first byte")
         while True:
             result = self._receiver.recv()
-            LOGGER.info(f'Received result')
+            LOGGER.info(f"Received result")
             self._results.append(result)
 
     def get_results(self) -> list:

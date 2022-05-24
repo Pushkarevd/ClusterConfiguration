@@ -5,7 +5,7 @@ from .worker import Worker
 from os import cpu_count
 
 
-LOGGER = logging.getLogger('executor')
+LOGGER = logging.getLogger("executor")
 logging.basicConfig(level=logging.WARNING)
 
 
@@ -18,10 +18,7 @@ class Executor:
 
     def __init__(self, task_list, result_list, lock):
         # Create workers and set status to IDLE
-        self._workers = {
-            idx: Worker()
-            for idx in range(cpu_count())
-        }
+        self._workers = {idx: Worker() for idx in range(cpu_count())}
 
         self._task_queue = task_list
         self._result_queue = result_list
@@ -53,8 +50,8 @@ class Executor:
             while self.__get_idle_worker() is not None and self._task_queue:
                 idle_worker: Worker = self._workers[self.__get_idle_worker()]
                 with self._lock:
-                    task = self._task_queue.pop()
-                LOGGER.debug('Task delegated')
+                    task = self._task_queue.pop(0)
+                LOGGER.debug("Task delegated")
                 idle_worker.execute_task(task)
                 continue
 
@@ -62,7 +59,7 @@ class Executor:
             finished_workers = self.__get_result_from_worker()
 
             if finished_workers:
-                LOGGER.debug('There some finished workers')
+                LOGGER.debug("There some finished workers")
                 results = self.__get_results(finished_workers)
                 self.__send_result(results)
 
@@ -74,7 +71,9 @@ class Executor:
         @return: list[(idx, result)]
         """
         worker_responses = [worker.result for worker in finished_workers]
-        results = [(response['idx'], response['result']) for response in worker_responses]
+        results = [
+            (response["idx"], response["result"]) for response in worker_responses
+        ]
         return results
 
     def __send_result(self, results):
@@ -99,5 +98,7 @@ class Executor:
         Helper function
         @return: dict, list of FINISHED workers
         """
-        finished_workers = [worker for worker in self._workers.values() if worker.status.value == 2]
+        finished_workers = [
+            worker for worker in self._workers.values() if worker.status.value == 2
+        ]
         return finished_workers

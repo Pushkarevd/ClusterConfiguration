@@ -5,7 +5,7 @@ import socket
 import time
 
 
-LOGGER = logging.getLogger('monitor')
+LOGGER = logging.getLogger("monitor")
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -35,25 +35,25 @@ class Monitor:
         @return: None
         """
         sock_1 = socket.socket()
-        sock_1.bind(('', 0))
+        sock_1.bind(("", 0))
         self._ventilator_port = sock_1.getsockname()[1]
 
         sock_2 = socket.socket()
-        sock_2.bind(('', 0))
+        sock_2.bind(("", 0))
         self._sink_port = sock_2.getsockname()[1]
 
         sock_1.close()
         sock_2.close()
 
     def __init_server(self):
-        LOGGER.info('Monitor server started')
-        self._sock.bind(('', self._port))
+        LOGGER.info("Monitor server started")
+        self._sock.bind(("", self._port))
         self._sock.listen(20)
 
         accepted_thread = threading.Thread(
             target=self.__accept_new_connection,
             daemon=True,
-            name='monitor_accepted_thread'
+            name="monitor_accepted_thread",
         )
         accepted_thread.start()
 
@@ -61,31 +61,31 @@ class Monitor:
         while True:
             conn, addr = self._sock.accept()
 
-            LOGGER.info(f'New worker {addr} connected')
+            LOGGER.info(f"New worker {addr} connected")
             # ID of connection is position of connection in worker list
             self._worker.append(conn)
             thread = threading.Thread(
                 target=self.__handle_worker,
-                args=(conn, addr,),
+                args=(
+                    conn,
+                    addr,
+                ),
                 daemon=True,
-                name=f'worker {len(self._worker)}'
+                name=f"worker {len(self._worker)}",
             )
             thread.start()
 
     def __init_msg(self, conn):
         # First message - Ventilator and Sink ports
         msg = pickle.dumps(
-            {
-                'ventilator': self._ventilator_port,
-                'sink': self._sink_port
-            }
+            {"ventilator": self._ventilator_port, "sink": self._sink_port}
         )
 
         try:
             conn.send(msg)
 
             check = conn.recv(1024)
-            if check.decode() != 'ACK':
+            if check.decode() != "ACK":
                 raise ConnectionError
         except ConnectionResetError:
             conn.close()
@@ -97,7 +97,7 @@ class Monitor:
 
         while True:
             try:
-                conn.send(b'STATUS')
+                conn.send(b"STATUS")
 
                 status = conn.recv(1024)
                 parsed_status = pickle.loads(status)
@@ -117,5 +117,5 @@ class Monitor:
         return self._ventilator_port, self._sink_port
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     server = Monitor()

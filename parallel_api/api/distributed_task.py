@@ -7,6 +7,7 @@ class DistributedTask:
     """
     Wrapper for distributed function
     """
+
     def __init__(self, endpoint, func, *args, **kwargs):
         self.func = func
         self.args = args
@@ -21,10 +22,10 @@ class DistributedTask:
         serialized_function = marshal.dumps(self.func.__code__)
         task = pickle.dumps(
             {
-                'idx': self._task_id,
-                'function': serialized_function,
-                'args': self.args,
-                'kwargs': self.kwargs if self.kwargs else {}
+                "idx": self._task_id,
+                "function": serialized_function,
+                "args": self.args,
+                "kwargs": self.kwargs if self.kwargs else {},
             }
         )
         return task
