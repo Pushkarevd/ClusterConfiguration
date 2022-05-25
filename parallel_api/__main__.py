@@ -68,10 +68,9 @@ def host_pipeline(port, endpoint=None):
     LOGGER.info(f"Ventilator initialize")
 
     endpoint_port = get_free_port() if endpoint is None else endpoint
+    print(f"Host ip - {self_ip}")
 
-    print(
-        f"Endpoint port - {self_ip}:{endpoint_port}. For module execution, use this port."
-    )
+    print(f"Endpoint port - {endpoint_port}. For module execution, use this port.")
 
     cluster_endpoint = ClusterEndpoint(endpoint_port, ventilator, sink)
     LOGGER.info("Endpoint started")
@@ -80,6 +79,17 @@ def host_pipeline(port, endpoint=None):
     LOGGER.info(monitor.view_statuses)
     ventilator.start_server()
     LOGGER.info("Ventilator ready for work")
+
+
+def main(target, *args):
+    pipeline_process = multiprocessing.Process(target=target, args=args, daemon=True)
+    pipeline_process.start()
+    while True:
+        try:
+            pass
+        except KeyboardInterrupt:
+            LOGGER.info("Stop cluster")
+            sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -101,13 +111,10 @@ if __name__ == "__main__":
 
     args = argparser.parse_known_args()[0]
 
-    if args.type == "host":
-        # Do host things
-        host_port = args.port
-        host_pipeline(host_port, args.endpoint)
-    else:
-        host_address = args.destination
-        ip = host_address[: host_address.find(":")]
-        port = int(host_address[host_address.find(":") + 1 :])
-        # Do worker things
-        worker_pipeline(ip, port)
+    host_args = args.port, args.endpoint
+    worker_args = args.destination.split(":") if args.destination is not None else None
+
+    target = {
+        "host": main(host_pipeline, *host_args),
+        "worker": main(worker_pipeline, *worker_args),
+    }
