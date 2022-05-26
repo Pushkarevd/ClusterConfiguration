@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 def worker_pipeline(ip: str, port: int):
     # Init Status
+    port = int(port)
     manager = multiprocessing.Manager()
     task_list = manager.list()
     result_list = manager.list()
@@ -82,6 +83,7 @@ def host_pipeline(port, endpoint=None):
 
 
 def main(target, *args):
+    print(args)
     pipeline_process = multiprocessing.Process(target=target, args=args, daemon=True)
     pipeline_process.start()
     while True:
@@ -114,7 +116,7 @@ if __name__ == "__main__":
     host_args = args.port, args.endpoint
     worker_args = args.destination.split(":") if args.destination is not None else None
 
-    target = {
-        "host": main(host_pipeline, *host_args),
-        "worker": main(worker_pipeline, *worker_args),
-    }
+    if args.type == 'host':
+        main(host_pipeline, *host_args)
+    else:
+        worker_pipeline(*worker_args)

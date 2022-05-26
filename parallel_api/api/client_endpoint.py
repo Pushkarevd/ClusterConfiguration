@@ -1,3 +1,7 @@
+import inspect
+import marshal
+from types import ModuleType, FunctionType
+
 import zmq
 import threading
 import pickle
@@ -6,6 +10,8 @@ import logging
 
 LOGGER = logging.getLogger("client-endpoint")
 logging.basicConfig(level=logging.DEBUG)
+
+COUNTER = 0
 
 
 class ClientEndpoint:
@@ -27,6 +33,10 @@ class ClientEndpoint:
         self._client = context.socket(zmq.PAIR)
         self._client.connect(f"tcp://127.0.0.1:{self.cluster_port}")
         LOGGER.info(f"Connected to {self.cluster_port}")
+
+        # Send global modules as init msg
+        imports = pickle.dumps(self.global_imports())
+        self._client.send(imports)
 
         self._read_thread = threading.Thread(
             target=self.__received_result, daemon=True, name="read_thread"
@@ -52,3 +62,17 @@ class ClientEndpoint:
 
     def send_task(self, task):
         self._client.send(task)
+
+    @staticmethod
+    def global_imports():
+        imports = {
+            'libs': {},
+            'functions': {}
+        }
+        for name, val in inspect.stack()[-1][0].f_globals.items():
+            if isinstance(val, ModuleType):
+                imports['libs'][name] = val.__name__
+            elif isinstance(val, FunctionType):
+                imports['functions'][name] = marshal.dumps(val.__code__)
+
+        return imports

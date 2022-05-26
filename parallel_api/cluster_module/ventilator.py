@@ -9,6 +9,8 @@ class Ventilator:
         self._sink = None
         self._sender = None
 
+        self.imports = None
+
     def start_server(self):
         context = zmq.Context()
         self._sender = context.socket(zmq.PUSH)

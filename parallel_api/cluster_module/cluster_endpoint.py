@@ -39,6 +39,8 @@ class ClusterEndpoint:
         self._send_thread.start()
 
     def __receiving_task(self):
+        self._ventilator.imports = self._server.recv()
+
         while True:
             msg = self._server.recv()
             LOGGER.debug(f"Message received")
